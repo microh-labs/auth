@@ -7,6 +7,8 @@ export type AppConfig = {
   appName: string;
   description?: string;
   logoUrl?: string;
+  privateKey?: string;
+  publicKey?: string;
 };
 
 export function saveAppConfig(config: AppConfig) {

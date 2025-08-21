@@ -129,13 +129,30 @@ app.use(express.json());
 app.get("/auth/api/app-config", (_req, res) => {
   const config = loadAppConfig();
   if (!config) return res.status(404).json({ error: "No config found" });
+  // Optionally, load keys from disk if not present in config
+  if (!config.privateKey || !config.publicKey) {
+    try {
+      const privateKey = fs.existsSync(PRIVATE_KEY_PATH)
+        ? fs.readFileSync(PRIVATE_KEY_PATH, "utf8")
+        : undefined;
+      const publicKey = fs.existsSync(PUBLIC_KEY_PATH)
+        ? fs.readFileSync(PUBLIC_KEY_PATH, "utf8")
+        : undefined;
+      config.privateKey = privateKey;
+      config.publicKey = publicKey;
+    } catch {}
+  }
   res.json(config);
 });
 
 app.post("/auth/api/app-config", (req, res) => {
-  const { appName, description, logoUrl } = req.body;
+  const { appName, description, logoUrl, privateKey, publicKey } = req.body;
   if (!appName) return res.status(400).json({ error: "appName is required" });
-  saveAppConfig({ appName, description, logoUrl });
+  saveAppConfig({ appName, description, logoUrl, privateKey, publicKey });
+  // Optionally, also save keys to disk if provided
+  if (privateKey && publicKey) {
+    saveKeys(privateKey, publicKey);
+  }
   res.json({ success: true });
 });
 app.post("/auth/api/keys/save", (req, res) => {
