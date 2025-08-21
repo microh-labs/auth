@@ -73,16 +73,17 @@ app.post("/auth/api/signup", async (req, res) => {
       error: "Password must be 8-64 characters, include a letter and a number",
     });
   }
-  // Check if username exists
-  const allUsers = await db.select().from(usersTable).all();
-  const existing = allUsers.find((u) => u.username === username);
-  if (existing) {
-    return res.status(409).json({ error: "Username already exists." });
-  }
   // Hash password
-  const hash = await bcrypt.hash(password, 12);
-  await db.insert(usersTable).values({ username, password: hash });
-  res.json({ success: true });
+  const passwordHash = await bcrypt.hash(password, 12);
+  try {
+    await db.insert(usersTable).values({ username, passwordHash });
+    res.json({ success: true });
+  } catch (err: any) {
+    if (err && err.code === "SQLITE_CONSTRAINT_UNIQUE") {
+      return res.status(409).json({ error: "Username already exists." });
+    }
+    return res.status(500).json({ error: "Internal server error" });
+  }
 });
 
 /**
@@ -147,7 +148,7 @@ app.post("/auth/api/login", async (req, res) => {
   if (!user) {
     return res.status(401).json({ error: "Invalid username or password." });
   }
-  const valid = await bcrypt.compare(password, user.password);
+  const valid = await bcrypt.compare(password, user.passwordHash);
   if (!valid) {
     return res.status(401).json({ error: "Invalid username or password." });
   }
