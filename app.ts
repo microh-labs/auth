@@ -1,19 +1,159 @@
+import bcrypt from "bcrypt";
+import { db } from "./src/db/index";
+import { usersTable } from "./src/db/schema";
 // ...existing code...
-import { saveAppConfig, loadAppConfig } from "./src/lib/app-config";
 import type { NextFunction, Request, Response } from "express";
 import express from "express";
 import path from "path";
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi, { type SwaggerOptions } from "swagger-ui-express";
+import { loadAppConfig, saveAppConfig } from "./src/lib/app-config";
 
-import { fileURLToPath } from "url";
-import fs from "fs";
-import pkg from "./package.json";
 import crypto from "crypto";
+import fs from "fs";
+import { fileURLToPath } from "url";
+import pkg from "./package.json";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
+/**
+ * @swagger
+ * /auth/api/signup:
+ *   post:
+ *     summary: Register a new user with username and password
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: User registered
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *       400:
+ *         description: Missing username or password
+ *       409:
+ *         description: Username already exists
+ */
+app.post("/auth/api/signup", async (req, res) => {
+  const { username, password } = req.body;
+  function validateUsername(username: string) {
+    return /^[a-z0-9_]{3,32}$/.test(username);
+  }
+  function validatePassword(password: string) {
+    return /^(?=.*[a-zA-Z])(?=.*\d).{8,64}$/.test(password);
+  }
+  if (!username || !password) {
+    return res
+      .status(400)
+      .json({ error: "Username and password are required." });
+  }
+  if (!validateUsername(username)) {
+    return res
+      .status(400)
+      .json({ error: "Username must be 3-32 characters, a-z, 0-9, or _" });
+  }
+  if (!validatePassword(password)) {
+    return res.status(400).json({
+      error: "Password must be 8-64 characters, include a letter and a number",
+    });
+  }
+  // Check if username exists
+  const allUsers = await db.select().from(usersTable).all();
+  const existing = allUsers.find((u) => u.username === username);
+  if (existing) {
+    return res.status(409).json({ error: "Username already exists." });
+  }
+  // Hash password
+  const hash = await bcrypt.hash(password, 12);
+  await db.insert(usersTable).values({ username, password: hash });
+  res.json({ success: true });
+});
+
+/**
+ * @swagger
+ * /auth/api/login:
+ *   post:
+ *     summary: Login with username and password
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               username:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 username:
+ *                   type: string
+ *       400:
+ *         description: Missing username or password
+ *       401:
+ *         description: Invalid username or password
+ */
+app.post("/auth/api/login", async (req, res) => {
+  const { username, password } = req.body;
+  function validateUsername(username: string) {
+    return /^[a-z0-9_]{3,32}$/.test(username);
+  }
+  function validatePassword(password: string) {
+    return /^(?=.*[a-zA-Z])(?=.*\d).{8,64}$/.test(password);
+  }
+  if (!username || !password) {
+    return res
+      .status(400)
+      .json({ error: "Username and password are required." });
+  }
+  if (!validateUsername(username)) {
+    return res
+      .status(400)
+      .json({ error: "Username must be 3-32 characters, a-z, 0-9, or _" });
+  }
+  if (!validatePassword(password)) {
+    return res.status(400).json({
+      error: "Password must be 8-64 characters, include a letter and a number",
+    });
+  }
+  const allUsersLogin = await db.select().from(usersTable).all();
+  const user = allUsersLogin.find((u) => u.username === username);
+  if (!user) {
+    return res.status(401).json({ error: "Invalid username or password." });
+  }
+  const valid = await bcrypt.compare(password, user.password);
+  if (!valid) {
+    return res.status(401).json({ error: "Invalid username or password." });
+  }
+  // TODO: Issue JWT or session here
+  res.json({ success: true, username });
+});
 // Generate and return a new keypair
 app.post("/auth/api/keys/generate", (_req, res) => {
   const { privateKey, publicKey } = generateKeypair();

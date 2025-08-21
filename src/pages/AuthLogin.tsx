@@ -9,15 +9,31 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 
 export default function AuthLogin() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const config = useAppConfig();
 
+  function validateUsername(username: string) {
+    return /^[a-z0-9_]{3,32}$/.test(username);
+  }
+  function validatePassword(password: string) {
+    return /^(?=.*[a-zA-Z])(?=.*\d).{8,64}$/.test(password);
+  }
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (!validateUsername(username)) {
+      setError("Username must be 3-32 characters, a-z, 0-9, or _");
+      return;
+    }
+    if (!validatePassword(password)) {
+      setError(
+        "Password must be 8-64 characters, include a letter and a number"
+      );
+      return;
+    }
     setLoading(true);
     // TODO: Implement real login logic
     setTimeout(() => {
@@ -78,16 +94,17 @@ export default function AuthLogin() {
             autoComplete="on"
           >
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="username"
+                type="text"
+                autoComplete="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
-                placeholder="you@example.com"
+                placeholder="Enter your username"
                 disabled={loading}
+                className="h-11 text-base"
               />
             </div>
             <div>
@@ -99,8 +116,9 @@ export default function AuthLogin() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                placeholder="Your password"
+                placeholder="Enter your password"
                 disabled={loading}
+                className="h-11 text-base"
               />
             </div>
             <Button

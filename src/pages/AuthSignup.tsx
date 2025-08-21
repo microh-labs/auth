@@ -9,7 +9,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 
 export default function AuthSignup() {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -17,10 +17,26 @@ export default function AuthSignup() {
   const [loading, setLoading] = useState(false);
   const config = useAppConfig();
 
+  function validateUsername(username: string) {
+    return /^[a-z0-9_]{3,32}$/.test(username);
+  }
+  function validatePassword(password: string) {
+    return /^(?=.*[a-zA-Z])(?=.*\d).{8,64}$/.test(password);
+  }
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    if (!validateUsername(username)) {
+      setError("Username must be 3-32 characters, a-z, 0-9, or _");
+      return;
+    }
+    if (!validatePassword(password)) {
+      setError(
+        "Password must be 8-64 characters, include a letter and a number"
+      );
+      return;
+    }
     if (password !== confirm) {
       setError("Passwords do not match");
       return;
@@ -91,16 +107,17 @@ export default function AuthSignup() {
             autoComplete="on"
           >
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="username">Username</Label>
               <Input
-                id="email"
-                type="email"
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="username"
+                type="text"
+                autoComplete="username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
                 required
-                placeholder="you@example.com"
+                placeholder="Create a username"
                 disabled={loading}
+                className="h-11 text-base"
               />
             </div>
             <div>
@@ -114,6 +131,7 @@ export default function AuthSignup() {
                 required
                 placeholder="Create a password"
                 disabled={loading}
+                className="h-11 text-base"
               />
             </div>
             <div>
@@ -127,6 +145,7 @@ export default function AuthSignup() {
                 required
                 placeholder="Repeat your password"
                 disabled={loading}
+                className="h-11 text-base"
               />
             </div>
             <Button
