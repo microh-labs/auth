@@ -1,17 +1,18 @@
 import bcrypt from "bcrypt";
+import { execSync } from "child_process";
+import crypto from "crypto";
 import type { NextFunction, Request, Response } from "express";
 import express from "express";
 import jwt from "jsonwebtoken";
 import path from "path";
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi, { type SwaggerOptions } from "swagger-ui-express";
+import { fileURLToPath } from "url";
+import pkg from "./package.json";
 import { db } from "./src/db/index";
 import { usersTable } from "./src/db/schema";
 import { loadAppConfig, saveAppConfig } from "./src/lib/app-config";
 
-import crypto from "crypto";
-import { fileURLToPath } from "url";
-import pkg from "./package.json";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -401,6 +402,13 @@ app.get("/auth/api/hello", (_req: Request, res: Response) => {
 
 // Only listen if not imported as middleware (i.e., if run as entrypoint)
 if (import.meta.main) {
+  // Auto-run drizzle-kit migrate before starting the server
+  try {
+    execSync("npx drizzle-kit migrate", { stdio: "inherit" });
+  } catch (e) {
+    console.error("Failed to run drizzle-kit migrate:", e);
+    process.exit(1);
+  }
   app.use("/auth", express.static(path.join(__dirname, "dist")));
   const port = process.env.PORT ? Number(process.env.PORT) : 0;
   const server = app.listen(port, () => {
