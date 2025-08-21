@@ -1,0 +1,4 @@
+onlyBuiltDependencies:
+  - '@scarf/scarf'
+  - '@tailwindcss/oxide'
+  - esbuild
