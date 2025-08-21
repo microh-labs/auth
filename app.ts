@@ -5,6 +5,8 @@ import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi, { type SwaggerOptions } from "swagger-ui-express";
 
 import { fileURLToPath } from "url";
+import fs from "fs";
+import crypto from "crypto";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -42,6 +44,129 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
     ];
   }
   next();
+});
+
+// --- JWT Keypair Setup Endpoints ---
+const KEYS_DIR = path.resolve(process.cwd(), "keys");
+const PRIVATE_KEY_PATH = path.join(KEYS_DIR, "jwtRS256.key");
+const PUBLIC_KEY_PATH = path.join(KEYS_DIR, "jwtRS256.key.pub");
+
+function keysExist() {
+  return fs.existsSync(PRIVATE_KEY_PATH) && fs.existsSync(PUBLIC_KEY_PATH);
+}
+
+function saveKeys(privateKey: string, publicKey: string) {
+  if (!fs.existsSync(KEYS_DIR)) fs.mkdirSync(KEYS_DIR);
+  fs.writeFileSync(PRIVATE_KEY_PATH, privateKey, { mode: 0o600 });
+  fs.writeFileSync(PUBLIC_KEY_PATH, publicKey, { mode: 0o644 });
+}
+
+function generateKeypair() {
+  const { publicKey, privateKey } = crypto.generateKeyPairSync("rsa", {
+    modulusLength: 2048,
+    publicKeyEncoding: { type: "spki", format: "pem" },
+    privateKeyEncoding: { type: "pkcs8", format: "pem" },
+  });
+  saveKeys(privateKey, publicKey);
+  return { privateKey, publicKey };
+}
+
+app.use(express.json());
+
+/**
+ * @swagger
+ * /api/auth/keys/status:
+ *   get:
+ *     summary: Check if JWT keypair exists
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Keypair status
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 exists:
+ *                   type: boolean
+ *                   example: true
+ */
+app.get("/api/auth/keys/status", (_req, res) => {
+  res.json({ exists: keysExist() });
+});
+
+/**
+ * @swagger
+ * /api/auth/keys/generate:
+ *   post:
+ *     summary: Auto-generate a new JWT keypair
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Generated keypair
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 privateKey:
+ *                   type: string
+ *                 publicKey:
+ *                   type: string
+ */
+app.post("/api/auth/keys/generate", (_req, res) => {
+  const { privateKey, publicKey } = generateKeypair();
+  res.json({ privateKey, publicKey });
+});
+
+/**
+ * @swagger
+ * /api/auth/keys/save:
+ *   post:
+ *     summary: Save a user-provided JWT keypair
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               privateKey:
+ *                 type: string
+ *               publicKey:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Keypair saved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *       400:
+ *         description: Missing keys
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Both privateKey and publicKey are required.
+ */
+app.post("/api/auth/keys/save", (req, res) => {
+  const { privateKey, publicKey } = req.body;
+  if (!privateKey || !publicKey) {
+    return res
+      .status(400)
+      .json({ error: "Both privateKey and publicKey are required." });
+  }
+  saveKeys(privateKey, publicKey);
+  res.json({ success: true });
 });
 
 app.use(
