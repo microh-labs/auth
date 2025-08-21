@@ -1,69 +1,88 @@
-# React + TypeScript + Vite
+# @microh-labs/auth
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> Modern, secure authentication SPA and API for your apps. Built with React, Express, Drizzle ORM, shadcn/ui, and Vite.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## Expanding the ESLint configuration
+- Username/password authentication with JWT (RS256, public/private key)
+- Professional, responsive UI (shadcn/ui, React, Vite)
+- Secure config, validation, and error handling
+- Auto-migrating SQLite DB (Drizzle ORM)
+- API docs (Swagger UI)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+---
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## Quick Start (End Users)
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+1. **Install:**
+   ```sh
+   npx @microh-labs/auth
+   # or clone and run: pnpm install && pnpm build && node .
+   ```
+2. **First Run:**
+   - Visit the setup page (`/setup`) to configure branding and upload/generate your JWT keypair.
+3. **Sign Up/Login:**
+   - Use the web UI to create your first user and log in.
+4. **API Docs:**
+   - Visit `/auth/api-docs` for Swagger API documentation.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+---
+
+## Developer Guide
+
+### Local Development
+
+```sh
+pnpm install
+pnpm dev
+# Open http://localhost:5173
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Project Structure
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- `src/pages/` — React pages (Auth, Profile, Setup, etc.)
+- `src/db/` — Drizzle ORM schema and DB logic
+- `app.ts` — Express backend (API, config, JWT, etc.)
+- `drizzle.config.ts` — Drizzle ORM config
+- `public/` — Static assets
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Database & Migrations
+
+- Uses SQLite (`drizzle.db`)
+- Migrations auto-run on server start (`drizzle-kit migrate`)
+- To create a new migration:
+  ```sh
+  pnpm drizzle-kit generate:sqlite
+  # or see Drizzle docs for details
+  ```
+
+### Linting & Build
+
+```sh
+pnpm lint
+pnpm build
 ```
+
+---
+
+## Maintainers
+
+- **Publishing:**
+  - Update version in `package.json`
+  - Build and publish to npm
+- **Config:**
+  - All app config (branding, keys) is stored in `auth-app-config.json`
+- **Screenshots:**
+  - See `/screenshots/` for UI previews
+- **Entrypoint:**
+  - `index.js` (CLI) and `app.ts` (server)
+- **Drizzle ORM:**
+  - See `drizzle.config.ts` and `/drizzle/` for schema/migrations
+
+---
+
+## License
+
+MIT — Chien Tran, microh-labs
