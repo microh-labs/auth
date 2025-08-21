@@ -248,16 +248,6 @@ export default function AuthSetup() {
                   >
                     Save Config
                   </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      navigate("/", { replace: true });
-                    }}
-                    disabled={!!status}
-                  >
-                    Back to Home
-                  </Button>
                 </div>
                 {saveMsg && (
                   <Alert
