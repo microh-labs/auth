@@ -75,22 +75,40 @@ export default function AuthHome() {
         <Separator className="my-4" />
         <CardContent className="flex flex-col gap-3">
           {jwtData ? (
-            <div className="bg-muted rounded p-4 text-sm break-all">
-              <div className="mb-2 font-semibold">Signed in as:</div>
-              <pre className="whitespace-pre-wrap break-all">
-                {JSON.stringify(jwtData, null, 2)}
-              </pre>
-              <Button
-                className="mt-4"
-                variant="secondary"
-                onClick={() => {
-                  localStorage.removeItem("auth_jwt");
-                  window.location.reload();
-                }}
-              >
-                Sign Out
-              </Button>
-            </div>
+            <Card className="bg-muted/60 border-none shadow-none">
+              <CardHeader className="flex flex-col items-center gap-2 pb-0">
+                <Avatar className="w-16 h-16 mb-2 border border-border shadow bg-white">
+                  <AvatarFallback className="text-lg">
+                    {jwtData.username?.[0]?.toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+                <CardTitle className="text-center text-xl font-semibold">
+                  {jwtData.username || "User"}
+                </CardTitle>
+                <CardDescription className="text-center text-sm">
+                  Signed in
+                </CardDescription>
+              </CardHeader>
+              <Separator className="my-2" />
+              <CardContent className="flex flex-col gap-2">
+                <div className="text-xs text-muted-foreground mb-1">
+                  JWT Claims
+                </div>
+                <pre className="whitespace-pre-wrap break-all bg-background rounded p-2 border text-xs">
+                  {JSON.stringify(jwtData, null, 2)}
+                </pre>
+                <Button
+                  className="mt-4"
+                  variant="secondary"
+                  onClick={() => {
+                    localStorage.removeItem("auth_jwt");
+                    window.location.reload();
+                  }}
+                >
+                  Sign Out
+                </Button>
+              </CardContent>
+            </Card>
           ) : jwtError ? (
             <div className="text-destructive">{jwtError}</div>
           ) : (
