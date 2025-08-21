@@ -1,4 +1,5 @@
 onlyBuiltDependencies:
   - '@scarf/scarf'
   - '@tailwindcss/oxide'
+  - better-sqlite3
   - esbuild
