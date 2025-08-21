@@ -178,7 +178,7 @@ app.use(
     const host = req.get("host");
     swaggerSpec.servers = [
       {
-        url: `${proto}://${host}/auth`,
+        url: `${proto}://${host}`,
       },
     ];
     swaggerUi.setup(swaggerSpec)(req, res, next);
