@@ -8,7 +8,7 @@ import swaggerUi, { type SwaggerOptions } from "swagger-ui-express";
 
 import { fileURLToPath } from "url";
 import fs from "fs";
-import pkg from "./package.json" assert { type: "json" };
+import pkg from "./package.json";
 import crypto from "crypto";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -86,7 +86,7 @@ app.use(express.json());
  *     tags: [AppConfig]
  *     responses:
  *       200:
- *         description: App config
+ *         description: App config (never includes privateKey)
  *         content:
  *           application/json:
  *             schema:
@@ -97,6 +97,8 @@ app.use(express.json());
  *                 description:
  *                   type: string
  *                 logoUrl:
+ *                   type: string
+ *                 publicKey:
  *                   type: string
  *   post:
  *     summary: Save app display config
@@ -114,6 +116,12 @@ app.use(express.json());
  *                 type: string
  *               logoUrl:
  *                 type: string
+ *               privateKey:
+ *                 type: string
+ *                 description: PEM-encoded private key (required only on first setup, never returned)
+ *               publicKey:
+ *                 type: string
+ *                 description: PEM-encoded public key
  *     responses:
  *       200:
  *         description: Config saved
@@ -125,26 +133,70 @@ app.use(express.json());
  *                 success:
  *                   type: boolean
  *                   example: true
+ *       403:
+ *         description: Config already exists. Overriding is not allowed.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+
+/**
+ * @swagger
+ * /auth/api/public-key:
+ *   get:
+ *     summary: Get the public key for JWT verification
+ *     tags: [AppConfig]
+ *     responses:
+ *       200:
+ *         description: PEM-encoded public key
+ *         content:
+ *           text/plain:
+ *             schema:
+ *               type: string
+ *       404:
+ *         description: No public key found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  */
 
 // App config endpoints
 app.get("/auth/api/app-config", (_req, res) => {
   const config = loadAppConfig();
   if (!config) return res.status(404).json({ error: "No config found" });
-  // Optionally, load keys from disk if not present in config
-  if (!config.privateKey || !config.publicKey) {
+  // Optionally, load public key from disk if not present in config
+  let publicKey = config.publicKey;
+  if (!publicKey) {
     try {
-      const privateKey = fs.existsSync(PRIVATE_KEY_PATH)
-        ? fs.readFileSync(PRIVATE_KEY_PATH, "utf8")
-        : undefined;
-      const publicKey = fs.existsSync(PUBLIC_KEY_PATH)
+      publicKey = fs.existsSync(PUBLIC_KEY_PATH)
         ? fs.readFileSync(PUBLIC_KEY_PATH, "utf8")
         : undefined;
-      config.privateKey = privateKey;
-      config.publicKey = publicKey;
     } catch {}
   }
-  res.json(config);
+  // Never expose privateKey
+  const { privateKey, ...safeConfig } = config;
+  res.json({ ...safeConfig, publicKey });
+});
+
+// Expose public key only
+app.get("/auth/api/public-key", (_req, res) => {
+  let publicKey = undefined;
+  const config = loadAppConfig();
+  if (config && config.publicKey) {
+    publicKey = config.publicKey;
+  } else if (fs.existsSync(PUBLIC_KEY_PATH)) {
+    publicKey = fs.readFileSync(PUBLIC_KEY_PATH, "utf8");
+  }
+  if (!publicKey) return res.status(404).json({ error: "No public key found" });
+  res.type("text/plain").send(publicKey);
 });
 
 app.post("/auth/api/app-config", (req, res) => {
