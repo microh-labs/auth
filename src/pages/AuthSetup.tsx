@@ -7,10 +7,7 @@ import { useNavigate } from "react-router-dom";
 export default function AuthSetup() {
   const [status, setStatus] = useState<null | boolean>(null);
   const [loading, setLoading] = useState(false);
-  const [genResult, setGenResult] = useState<{
-    privateKey: string;
-    publicKey: string;
-  } | null>(null);
+  // Removed unused genResult state
   const [manualPriv, setManualPriv] = useState("");
   const [manualPub, setManualPub] = useState("");
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
@@ -51,8 +48,8 @@ export default function AuthSetup() {
   }, [status, navigate]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-svh gap-4">
-      <h1 className="text-2xl font-bold">Auth Key Setup</h1>
+    <section className="flex flex-col items-center justify-center gap-6 w-full">
+      <h1 className="text-3xl font-bold tracking-tight mb-2">Auth Key Setup</h1>
       {loading ? (
         <div>Loading...</div>
       ) : status ? (
@@ -64,7 +61,7 @@ export default function AuthSetup() {
           <div className="text-red-600">
             No config found. Please set up your app and keys.
           </div>
-          <div className="flex flex-col gap-4 w-full max-w-xl mt-4">
+          <div className="flex flex-col gap-4 w-full max-w-xl mt-4 p-4 border border-border rounded-lg bg-muted/40">
             <h2 className="font-semibold">App Display Config</h2>
             <div className="flex flex-col gap-2">
               <label
@@ -132,14 +129,14 @@ export default function AuthSetup() {
             <div className="flex flex-col gap-2">
               <Button
                 onClick={async () => {
-                  setGenResult(null);
+                  // removed setGenResult(null);
                   setSaveMsg(null);
                   setLoading(true);
                   const res = await fetch("/auth/api/keys/generate", {
                     method: "POST",
                   });
                   const data = await res.json();
-                  setGenResult(data);
+                  // removed setGenResult(data);
                   setManualPriv(data.privateKey);
                   setManualPub(data.publicKey);
                   setLoading(false);
@@ -267,6 +264,6 @@ export default function AuthSetup() {
           </div>
         </>
       )}
-    </div>
+    </section>
   );
 }

@@ -15,8 +15,10 @@ export default function AuthHome() {
       .catch(() => navigate("/setup", { replace: true }));
   }, [navigate]);
   return (
-    <div className="flex flex-col items-center justify-center min-h-svh gap-4">
-      <h1 className="text-2xl font-bold">Welcome to Auth</h1>
+    <section className="flex flex-col items-center justify-center gap-6 w-full">
+      <h1 className="text-3xl font-bold tracking-tight mb-2">
+        Welcome to Auth
+      </h1>
       <div className="flex gap-4">
         <Button asChild>
           <Link to="/auth/signup">Sign Up</Link>
@@ -25,6 +27,6 @@ export default function AuthHome() {
           <Link to="/auth/login">Login</Link>
         </Button>
       </div>
-    </div>
+    </section>
   );
 }

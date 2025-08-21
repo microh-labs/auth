@@ -1,5 +1,13 @@
 import AppRouter from "./AppRouter";
+import Footer from "@/components/Footer";
 
 export default function App() {
-  return <AppRouter />;
+  return (
+    <div className="flex flex-col min-h-svh bg-background text-foreground">
+      <main className="flex-1 flex flex-col items-center justify-center px-4 py-8 sm:px-8 max-w-2xl w-full mx-auto border border-border rounded-lg shadow-sm bg-card mt-8 mb-4">
+        <AppRouter />
+      </main>
+      <Footer />
+    </div>
+  );
 }
