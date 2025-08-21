@@ -207,21 +207,28 @@ app.post("/auth/api/app-config", (req, res) => {
   }
   const { appName, description, logoUrl, privateKey, publicKey } = req.body;
   if (!appName) return res.status(400).json({ error: "appName is required" });
+  // Validate keys if provided
+  if (privateKey && publicKey) {
+    try {
+      crypto.createPrivateKey({
+        key: privateKey,
+        format: "pem",
+        type: "pkcs8",
+      });
+    } catch (e) {
+      return res.status(400).json({ error: "Invalid private key." });
+    }
+    try {
+      crypto.createPublicKey({ key: publicKey, format: "pem", type: "spki" });
+    } catch (e) {
+      return res.status(400).json({ error: "Invalid public key." });
+    }
+  }
   saveAppConfig({ appName, description, logoUrl, privateKey, publicKey });
   // Optionally, also save keys to disk if provided
   if (privateKey && publicKey) {
     saveKeys(privateKey, publicKey);
   }
-  res.json({ success: true });
-});
-app.post("/auth/api/keys/save", (req, res) => {
-  const { privateKey, publicKey } = req.body;
-  if (!privateKey || !publicKey) {
-    return res
-      .status(400)
-      .json({ error: "Both privateKey and publicKey are required." });
-  }
-  saveKeys(privateKey, publicKey);
   res.json({ success: true });
 });
 
