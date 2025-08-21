@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { db } from "./src/db/index";
 import { usersTable } from "./src/db/schema";
+import jwt from "jsonwebtoken";
 // ...existing code...
 import type { NextFunction, Request, Response } from "express";
 import express from "express";
@@ -17,7 +18,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-
+app.use(express.json());
 /**
  * @swagger
  * /auth/api/signup:
@@ -77,9 +78,25 @@ app.post("/auth/api/signup", async (req, res) => {
   const passwordHash = await bcrypt.hash(password, 12);
   try {
     await db.insert(usersTable).values({ username, passwordHash });
-    res.json({ success: true });
+    // Issue JWT on signup
+    let privateKey;
+    try {
+      privateKey = fs.readFileSync(
+        path.join(process.cwd(), "keys", "jwtRS256.key"),
+        "utf8"
+      );
+    } catch (e) {
+      return res
+        .status(500)
+        .json({ error: "JWT private key not found. Please run setup." });
+    }
+    const token = jwt.sign({ username }, privateKey, {
+      algorithm: "RS256",
+      expiresIn: "7d",
+    });
+    return res.json({ success: true, token });
   } catch (err: any) {
-    if (err && err.code === "SQLITE_CONSTRAINT_UNIQUE") {
+    if (err && err.cause.code === "SQLITE_CONSTRAINT_UNIQUE") {
       return res.status(409).json({ error: "Username already exists." });
     }
     return res.status(500).json({ error: "Internal server error" });

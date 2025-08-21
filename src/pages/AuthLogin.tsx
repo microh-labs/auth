@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAppConfig } from "@/lib/useAppConfig";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +14,7 @@ export default function AuthLogin() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const config = useAppConfig();
+  const navigate = useNavigate();
 
   function validateUsername(username: string) {
     return /^[a-z0-9_]{3,32}$/.test(username);
@@ -35,11 +36,29 @@ export default function AuthLogin() {
       return;
     }
     setLoading(true);
-    // TODO: Implement real login logic
-    setTimeout(() => {
+    try {
+      const res = await fetch("/auth/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
+      });
       setLoading(false);
-      setError("Invalid credentials (demo only)");
-    }, 1000);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.token) {
+          localStorage.setItem("auth_jwt", data.token);
+          navigate("/", { replace: true });
+        } else {
+          setError("No token received");
+        }
+      } else {
+        const data = await res.json();
+        setError(data.error || "Login failed");
+      }
+    } catch (err) {
+      setLoading(false);
+      setError("Network error");
+    }
   }
 
   const fallbackLogo =
