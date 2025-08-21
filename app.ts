@@ -1,3 +1,4 @@
+import { saveAppConfig, loadAppConfig } from "./src/lib/app-config";
 import type { NextFunction, Request, Response } from "express";
 import express from "express";
 import path from "path";
@@ -74,58 +75,30 @@ function generateKeypair() {
 
 app.use(express.json());
 
+// Place this after app is declared and before other route registrations
 /**
  * @swagger
- * /auth/api/keys/status:
+ * /auth/api/app-config:
  *   get:
- *     summary: Check if JWT keypair exists
- *     tags: [Auth]
+ *     summary: Get app display config
+ *     tags: [AppConfig]
  *     responses:
  *       200:
- *         description: Keypair status
+ *         description: App config
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 exists:
- *                   type: boolean
- *                   example: true
- */
-app.get("/auth/api/keys/status", (_req, res) => {
-  res.json({ exists: keysExist() });
-});
-
-/**
- * @swagger
- * /auth/api/keys/generate:
- *   post:
- *     summary: Auto-generate a new JWT keypair
- *     tags: [Auth]
- *     responses:
- *       200:
- *         description: Generated keypair
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 privateKey:
+ *                 appName:
  *                   type: string
- *                 publicKey:
+ *                 description:
  *                   type: string
- */
-app.post("/auth/api/keys/generate", (_req, res) => {
-  const { privateKey, publicKey } = generateKeypair();
-  res.json({ privateKey, publicKey });
-});
-
-/**
- * @swagger
- * /auth/api/keys/save:
+ *                 logoUrl:
+ *                   type: string
  *   post:
- *     summary: Save a user-provided JWT keypair
- *     tags: [Auth]
+ *     summary: Save app display config
+ *     tags: [AppConfig]
  *     requestBody:
  *       required: true
  *       content:
@@ -133,13 +106,15 @@ app.post("/auth/api/keys/generate", (_req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               privateKey:
+ *               appName:
  *                 type: string
- *               publicKey:
+ *               description:
+ *                 type: string
+ *               logoUrl:
  *                 type: string
  *     responses:
  *       200:
- *         description: Keypair saved
+ *         description: Config saved
  *         content:
  *           application/json:
  *             schema:
@@ -148,17 +123,21 @@ app.post("/auth/api/keys/generate", (_req, res) => {
  *                 success:
  *                   type: boolean
  *                   example: true
- *       400:
- *         description: Missing keys
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: Both privateKey and publicKey are required.
  */
+
+// App config endpoints
+app.get("/auth/api/app-config", (_req, res) => {
+  const config = loadAppConfig();
+  if (!config) return res.status(404).json({ error: "No config found" });
+  res.json(config);
+});
+
+app.post("/auth/api/app-config", (req, res) => {
+  const { appName, description, logoUrl } = req.body;
+  if (!appName) return res.status(400).json({ error: "appName is required" });
+  saveAppConfig({ appName, description, logoUrl });
+  res.json({ success: true });
+});
 app.post("/auth/api/keys/save", (req, res) => {
   const { privateKey, publicKey } = req.body;
   if (!privateKey || !publicKey) {

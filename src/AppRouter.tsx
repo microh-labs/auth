@@ -6,7 +6,7 @@ export default function AppRouter() {
   return (
     <HashRouter>
       <Routes>
-        <Route path="/auth" element={<AuthHome />} />
+        <Route path="/" element={<AuthHome />} />
         <Route path="*" element={<AuthSetup />} />
       </Routes>
     </HashRouter>
