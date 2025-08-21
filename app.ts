@@ -17,11 +17,6 @@ const app = express();
 // Generate and return a new keypair
 app.post("/auth/api/keys/generate", (_req, res) => {
   const { privateKey, publicKey } = generateKeypair();
-  // Also save to config file if config exists, else create minimal config
-  let config = loadAppConfig() || { appName: "", description: "", logoUrl: "" };
-  config.privateKey = privateKey;
-  config.publicKey = publicKey;
-  saveAppConfig(config);
   res.json({ privateKey, publicKey });
 });
 // Trust proxy headers (needed for correct protocol detection behind Cloudflare Tunnel or reverse proxies)
@@ -153,6 +148,11 @@ app.get("/auth/api/app-config", (_req, res) => {
 });
 
 app.post("/auth/api/app-config", (req, res) => {
+  if (loadAppConfig()) {
+    return res
+      .status(403)
+      .json({ error: "Config already exists. Overriding is not allowed." });
+  }
   const { appName, description, logoUrl, privateKey, publicKey } = req.body;
   if (!appName) return res.status(400).json({ error: "appName is required" });
   saveAppConfig({ appName, description, logoUrl, privateKey, publicKey });

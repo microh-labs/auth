@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -41,13 +41,26 @@ export default function AuthSetup() {
       .finally(() => setLoading(false));
   }, [navigate]);
 
+  // If config already exists, block further setup and auto-redirect
+  useEffect(() => {
+    if (status) {
+      // Delay to show success message if just saved
+      const timeout = setTimeout(() => {
+        navigate("/", { replace: true });
+      }, 1200);
+      return () => clearTimeout(timeout);
+    }
+  }, [status, navigate]);
+
   return (
     <div className="flex flex-col items-center justify-center min-h-svh gap-4">
       <h1 className="text-2xl font-bold">Auth Key Setup</h1>
       {loading ? (
         <div>Loading...</div>
       ) : status ? (
-        <div className="text-green-600">Config already exists.</div>
+        <div className="text-green-600">
+          Config already exists. Redirecting...
+        </div>
       ) : (
         <>
           <div className="text-red-600">
@@ -76,6 +89,7 @@ export default function AuthSetup() {
                     ? "border-destructive focus-visible:ring-destructive/40"
                     : ""
                 }
+                disabled={!!status}
               />
               {!appName.trim() && (
                 <span className="text-xs text-destructive">
@@ -97,6 +111,7 @@ export default function AuthSetup() {
                 placeholder="Short description of your auth portal (optional)"
                 rows={2}
                 maxLength={256}
+                disabled={!!status}
               />
             </div>
             <div className="flex flex-col gap-2 mt-2">
@@ -112,6 +127,7 @@ export default function AuthSetup() {
                 onChange={(e) => setLogoUrl(e.target.value)}
                 placeholder="Logo image URL (optional)"
                 type="url"
+                disabled={!!status}
               />
             </div>
             <h2 className="font-semibold mt-6">Keypair</h2>
@@ -130,24 +146,11 @@ export default function AuthSetup() {
                   setManualPub(data.publicKey);
                   setLoading(false);
                 }}
-                disabled={loading}
+                disabled={loading || !!status}
                 variant="secondary"
               >
                 Auto-generate Keypair
               </Button>
-              {genResult && (
-                <div className="bg-muted rounded p-2 text-xs">
-                  <div className="mb-2 font-mono">Private Key:</div>
-                  <Textarea
-                    value={genResult.privateKey}
-                    readOnly
-                    rows={5}
-                    className="mb-2"
-                  />
-                  <div className="mb-2 font-mono">Public Key:</div>
-                  <Textarea value={genResult.publicKey} readOnly rows={3} />
-                </div>
-              )}
               <div className="flex flex-col gap-1 mt-2">
                 <label
                   htmlFor="privateKey"
@@ -169,6 +172,7 @@ export default function AuthSetup() {
                       ? "border-destructive focus-visible:ring-destructive/40"
                       : ""
                   }
+                  disabled={!!status}
                 />
                 {!manualPriv.trim() && (
                   <span className="text-xs text-destructive">
@@ -197,6 +201,7 @@ export default function AuthSetup() {
                       ? "border-destructive focus-visible:ring-destructive/40"
                       : ""
                   }
+                  disabled={!!status}
                 />
                 {!manualPub.trim() && (
                   <span className="text-xs text-destructive">
@@ -243,7 +248,8 @@ export default function AuthSetup() {
                   saving ||
                   !appName.trim() ||
                   !manualPriv.trim() ||
-                  !manualPub.trim()
+                  !manualPub.trim() ||
+                  !!status
                 }
               >
                 Save Config
@@ -254,6 +260,7 @@ export default function AuthSetup() {
                   // Go back to home
                   navigate("/", { replace: true });
                 }}
+                disabled={!!status}
               >
                 Back to Home
               </Button>
