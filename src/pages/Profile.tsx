@@ -49,7 +49,7 @@ export default function Profile() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-3">
-            <Button onClick={() => navigate("/auth/login")}>Sign In</Button>
+            <Button onClick={() => navigate("/login")}>Sign In</Button>
           </CardContent>
         </Card>
       </div>
@@ -83,7 +83,7 @@ export default function Profile() {
             variant="secondary"
             onClick={() => {
               localStorage.removeItem("auth_jwt");
-              window.location.href = "/";
+              window.location.href = "/auth";
             }}
           >
             Sign Out

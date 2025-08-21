@@ -83,14 +83,14 @@ export default function AuthHome() {
           ) : (
             <>
               <Button asChild className="w-full h-11 text-base">
-                <Link to="/auth/signup">Sign Up</Link>
+                <Link to="/signup">Sign Up</Link>
               </Button>
               <Button
                 asChild
                 variant="secondary"
                 className="w-full h-11 text-base"
               >
-                <Link to="/auth/login">Login</Link>
+                <Link to="/login">Login</Link>
               </Button>
             </>
           )}

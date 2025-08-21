@@ -11,8 +11,8 @@ export default function AppRouter() {
       <Routes>
         <Route path="/" element={<AuthHome />} />
         <Route path="/setup" element={<AuthSetup />} />
-        <Route path="/auth/login" element={<AuthLogin />} />
-        <Route path="/auth/signup" element={<AuthSignup />} />
+        <Route path="/login" element={<AuthLogin />} />
+        <Route path="/signup" element={<AuthSignup />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="*" element={<AuthHome />} />
       </Routes>

@@ -99,7 +99,7 @@ export default function AuthSignup() {
             <span className="text-sm text-muted-foreground">
               Already have an account?{" "}
               <Link
-                to="/auth/login"
+                to="/login"
                 className="underline hover:text-primary font-medium"
               >
                 Sign In
