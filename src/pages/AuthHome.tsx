@@ -8,7 +8,7 @@ export default function AuthHome() {
     fetch("/auth/api/app-config")
       .then((res) => res.json())
       .then((data) => {
-        if (!data || !data.appName || !data.privateKey || !data.publicKey) {
+        if (!data || !data.appName || !data.publicKey) {
           navigate("/setup", { replace: true });
         }
       })

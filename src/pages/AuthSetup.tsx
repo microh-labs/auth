@@ -32,19 +32,17 @@ export default function AuthSetup() {
           setManualPriv(data.privateKey || "");
           setManualPub(data.publicKey || "");
           setStatus(true);
-          navigate("/auth", { replace: true });
         } else {
           setStatus(false);
         }
       })
       .catch(() => setStatus(false))
       .finally(() => setLoading(false));
-  }, [navigate]);
+  }, []);
 
-  // If config already exists, block further setup and auto-redirect
+  // Always redirect to home if config exists (after a short delay)
   useEffect(() => {
     if (status) {
-      // Delay to show success message if just saved
       const timeout = setTimeout(() => {
         navigate("/", { replace: true });
       }, 1200);
