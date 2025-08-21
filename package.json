@@ -9,7 +9,8 @@
     "build:server": "node esbuild.config.mjs",
     "build": "pnpm build:client && pnpm build:server",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prepublishOnly": "pnpm build"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
