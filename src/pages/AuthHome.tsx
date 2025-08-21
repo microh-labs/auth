@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import {
   Card,
   CardHeader,
@@ -10,26 +10,16 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { useAppConfig } from "@/lib/useAppConfig";
 
 export default function AuthHome() {
   const navigate = useNavigate();
-  const [config, setConfig] = useState<{
-    appName?: string;
-    description?: string;
-    logoUrl?: string;
-  } | null>(null);
+  const config = useAppConfig();
   useEffect(() => {
-    fetch("/auth/api/app-config")
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data || !data.appName || !data.publicKey) {
-          navigate("/setup", { replace: true });
-        } else {
-          setConfig(data);
-        }
-      })
-      .catch(() => navigate("/setup", { replace: true }));
-  }, [navigate]);
+    if (config && (!config.appName || !config.publicKey)) {
+      navigate("/setup", { replace: true });
+    }
+  }, [config, navigate]);
   const fallbackLogo =
     "https://avatars.githubusercontent.com/u/227540007?s=200&v=4";
   const appName = config?.appName || "Auth Service";

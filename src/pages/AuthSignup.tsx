@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useAppConfig } from "@/lib/useAppConfig";
 import { Link } from "react-router-dom";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -14,18 +15,7 @@ export default function AuthSignup() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [config, setConfig] = useState<{
-    appName?: string;
-    description?: string;
-    logoUrl?: string;
-  } | null>(null);
-
-  useEffect(() => {
-    fetch("/auth/api/app-config")
-      .then((res) => res.json())
-      .then((data) => setConfig(data))
-      .catch(() => setConfig(null));
-  }, []);
+  const config = useAppConfig();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
