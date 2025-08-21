@@ -6,6 +6,7 @@ import swaggerUi, { type SwaggerOptions } from "swagger-ui-express";
 
 import { fileURLToPath } from "url";
 import fs from "fs";
+import pkg from "./package.json" assert { type: "json" };
 import crypto from "crypto";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,7 +20,7 @@ const swaggerDefinition = {
   openapi: "3.0.0",
   info: {
     title: "@microh-lab/auth API",
-    version: "1.0.0",
+    version: pkg.version,
     description: "API documentation for @microh-lab/auth",
   },
   servers: [],
@@ -75,7 +76,7 @@ app.use(express.json());
 
 /**
  * @swagger
- * /api/auth/keys/status:
+ * /auth/api/keys/status:
  *   get:
  *     summary: Check if JWT keypair exists
  *     tags: [Auth]
@@ -91,13 +92,13 @@ app.use(express.json());
  *                   type: boolean
  *                   example: true
  */
-app.get("/api/auth/keys/status", (_req, res) => {
+app.get("/auth/api/keys/status", (_req, res) => {
   res.json({ exists: keysExist() });
 });
 
 /**
  * @swagger
- * /api/auth/keys/generate:
+ * /auth/api/keys/generate:
  *   post:
  *     summary: Auto-generate a new JWT keypair
  *     tags: [Auth]
@@ -114,14 +115,14 @@ app.get("/api/auth/keys/status", (_req, res) => {
  *                 publicKey:
  *                   type: string
  */
-app.post("/api/auth/keys/generate", (_req, res) => {
+app.post("/auth/api/keys/generate", (_req, res) => {
   const { privateKey, publicKey } = generateKeypair();
   res.json({ privateKey, publicKey });
 });
 
 /**
  * @swagger
- * /api/auth/keys/save:
+ * /auth/api/keys/save:
  *   post:
  *     summary: Save a user-provided JWT keypair
  *     tags: [Auth]
@@ -158,7 +159,7 @@ app.post("/api/auth/keys/generate", (_req, res) => {
  *                   type: string
  *                   example: Both privateKey and publicKey are required.
  */
-app.post("/api/auth/keys/save", (req, res) => {
+app.post("/auth/api/keys/save", (req, res) => {
   const { privateKey, publicKey } = req.body;
   if (!privateKey || !publicKey) {
     return res
@@ -170,14 +171,14 @@ app.post("/api/auth/keys/save", (req, res) => {
 });
 
 app.use(
-  "/api-docs",
+  "/auth/api-docs",
   swaggerUi.serve,
   (req: Request, res: Response, next: NextFunction) => {
     const proto = req.protocol;
     const host = req.get("host");
     swaggerSpec.servers = [
       {
-        url: `${proto}://${host}`,
+        url: `${proto}://${host}/auth`,
       },
     ];
     swaggerUi.setup(swaggerSpec)(req, res, next);
@@ -186,7 +187,7 @@ app.use(
 
 /**
  * @swagger
- * /api/hello:
+ * /auth/api/hello:
  *   get:
  *     summary: Returns a greeting message
  *     responses:
@@ -201,19 +202,19 @@ app.use(
  *                   type: string
  *                   example: Hello from Chien Tran!
  */
-app.get("/api/hello", (_req: Request, res: Response) => {
+app.get("/auth/api/hello", (_req: Request, res: Response) => {
   res.json({ message: "Hello from Chien Tran!" });
 });
 
 // Only listen if not imported as middleware (i.e., if run as entrypoint)
 if (import.meta.main) {
-  app.use(express.static(path.join(__dirname, "dist")));
+  app.use("/auth", express.static(path.join(__dirname, "dist")));
   const port = process.env.PORT ? Number(process.env.PORT) : 0;
   const server = app.listen(port, () => {
     const actualPort = (server.address() as any).port;
-    console.log(`Server running at http://localhost:${actualPort}`);
+    console.log(`Server running at http://localhost:${actualPort}/auth`);
     console.log(
-      `Swagger UI available at http://localhost:${actualPort}/api-docs`
+      `Swagger UI available at http://localhost:${actualPort}/auth/api-docs`
     );
   });
 }
