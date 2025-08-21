@@ -12,7 +12,7 @@ export default function AppMeta() {
 
   return (
     <Helmet>
-      <title>{appName} | Auth</title>
+      <title>{appName}</title>
       <meta name="description" content={description} />
       <link rel="icon" type="image/png" href={logoUrl} />
     </Helmet>

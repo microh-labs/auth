@@ -1,17 +1,15 @@
 import bcrypt from "bcrypt";
-import { db } from "./src/db/index";
-import { usersTable } from "./src/db/schema";
-import jwt from "jsonwebtoken";
-// ...existing code...
 import type { NextFunction, Request, Response } from "express";
 import express from "express";
+import jwt from "jsonwebtoken";
 import path from "path";
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUi, { type SwaggerOptions } from "swagger-ui-express";
+import { db } from "./src/db/index";
+import { usersTable } from "./src/db/schema";
 import { loadAppConfig, saveAppConfig } from "./src/lib/app-config";
 
 import crypto from "crypto";
-import fs from "fs";
 import { fileURLToPath } from "url";
 import pkg from "./package.json";
 const __filename = fileURLToPath(import.meta.url);
@@ -79,18 +77,13 @@ app.post("/auth/api/signup", async (req, res) => {
   try {
     await db.insert(usersTable).values({ username, passwordHash });
     // Issue JWT on signup
-    let privateKey;
-    try {
-      privateKey = fs.readFileSync(
-        path.join(process.cwd(), "keys", "jwtRS256.key"),
-        "utf8"
-      );
-    } catch (e) {
-      return res
-        .status(500)
-        .json({ error: "JWT private key not found. Please run setup." });
+    const config = loadAppConfig();
+    if (!config?.privateKey) {
+      return res.status(500).json({
+        error: "JWT private key not found in config. Please run setup.",
+      });
     }
-    const token = jwt.sign({ username }, privateKey, {
+    const token = jwt.sign({ username }, config.privateKey, {
       algorithm: "RS256",
       expiresIn: "7d",
     });
@@ -169,8 +162,18 @@ app.post("/auth/api/login", async (req, res) => {
   if (!valid) {
     return res.status(401).json({ error: "Invalid username or password." });
   }
-  // TODO: Issue JWT or session here
-  res.json({ success: true, username });
+  // Issue JWT on login
+  const config = loadAppConfig();
+  if (!config?.privateKey) {
+    return res.status(500).json({
+      error: "JWT private key not found in config. Please run setup.",
+    });
+  }
+  const token = jwt.sign({ username }, config.privateKey, {
+    algorithm: "RS256",
+    expiresIn: "7d",
+  });
+  res.json({ success: true, token });
 });
 // Generate and return a new keypair
 app.post("/auth/api/keys/generate", (_req, res) => {
@@ -212,24 +215,12 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   next();
 });
 
-// --- JWT Keypair Setup Endpoints ---
-const KEYS_DIR = path.resolve(process.cwd(), "keys");
-const PRIVATE_KEY_PATH = path.join(KEYS_DIR, "jwtRS256.key");
-const PUBLIC_KEY_PATH = path.join(KEYS_DIR, "jwtRS256.key.pub");
-
-function saveKeys(privateKey: string, publicKey: string) {
-  if (!fs.existsSync(KEYS_DIR)) fs.mkdirSync(KEYS_DIR);
-  fs.writeFileSync(PRIVATE_KEY_PATH, privateKey, { mode: 0o600 });
-  fs.writeFileSync(PUBLIC_KEY_PATH, publicKey, { mode: 0o644 });
-}
-
 function generateKeypair() {
   const { publicKey, privateKey } = crypto.generateKeyPairSync("rsa", {
     modulusLength: 2048,
     publicKeyEncoding: { type: "spki", format: "pem" },
     privateKeyEncoding: { type: "pkcs8", format: "pem" },
   });
-  saveKeys(privateKey, publicKey);
   return { privateKey, publicKey };
 }
 
@@ -330,31 +321,17 @@ app.use(express.json());
 app.get("/auth/api/app-config", (_req, res) => {
   const config = loadAppConfig();
   if (!config) return res.status(404).json({ error: "No config found" });
-  // Optionally, load public key from disk if not present in config
-  let publicKey = config.publicKey;
-  if (!publicKey) {
-    try {
-      publicKey = fs.existsSync(PUBLIC_KEY_PATH)
-        ? fs.readFileSync(PUBLIC_KEY_PATH, "utf8")
-        : undefined;
-    } catch {}
-  }
   // Never expose privateKey
   const { privateKey, ...safeConfig } = config;
-  res.json({ ...safeConfig, publicKey });
+  res.json({ ...safeConfig, publicKey: config.publicKey });
 });
 
 // Expose public key only
 app.get("/auth/api/public-key", (_req, res) => {
-  let publicKey = undefined;
   const config = loadAppConfig();
-  if (config && config.publicKey) {
-    publicKey = config.publicKey;
-  } else if (fs.existsSync(PUBLIC_KEY_PATH)) {
-    publicKey = fs.readFileSync(PUBLIC_KEY_PATH, "utf8");
-  }
-  if (!publicKey) return res.status(404).json({ error: "No public key found" });
-  res.type("text/plain").send(publicKey);
+  if (!config?.publicKey)
+    return res.status(404).json({ error: "No public key found" });
+  res.type("text/plain").send(config.publicKey);
 });
 
 app.post("/auth/api/app-config", (req, res) => {
@@ -383,10 +360,6 @@ app.post("/auth/api/app-config", (req, res) => {
     }
   }
   saveAppConfig({ appName, description, logoUrl, privateKey, publicKey });
-  // Optionally, also save keys to disk if provided
-  if (privateKey && publicKey) {
-    saveKeys(privateKey, publicKey);
-  }
   res.json({ success: true });
 });
 
