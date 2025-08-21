@@ -1,3 +1,4 @@
+// ...existing code...
 import { saveAppConfig, loadAppConfig } from "./src/lib/app-config";
 import type { NextFunction, Request, Response } from "express";
 import express from "express";
@@ -13,6 +14,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+// Generate and return a new keypair
+app.post("/auth/api/keys/generate", (_req, res) => {
+  const { privateKey, publicKey } = generateKeypair();
+  // Also save to config file if config exists, else create minimal config
+  let config = loadAppConfig() || { appName: "", description: "", logoUrl: "" };
+  config.privateKey = privateKey;
+  config.publicKey = publicKey;
+  saveAppConfig(config);
+  res.json({ privateKey, publicKey });
+});
 // Trust proxy headers (needed for correct protocol detection behind Cloudflare Tunnel or reverse proxies)
 app.set("trust proxy", true);
 
@@ -52,10 +63,6 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 const KEYS_DIR = path.resolve(process.cwd(), "keys");
 const PRIVATE_KEY_PATH = path.join(KEYS_DIR, "jwtRS256.key");
 const PUBLIC_KEY_PATH = path.join(KEYS_DIR, "jwtRS256.key.pub");
-
-function keysExist() {
-  return fs.existsSync(PRIVATE_KEY_PATH) && fs.existsSync(PUBLIC_KEY_PATH);
-}
 
 function saveKeys(privateKey: string, publicKey: string) {
   if (!fs.existsSync(KEYS_DIR)) fs.mkdirSync(KEYS_DIR);

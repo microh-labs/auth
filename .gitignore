@@ -27,3 +27,4 @@ index.js
 index.js.map
 *.db
 keys/*
+*.json
