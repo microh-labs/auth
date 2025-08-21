@@ -19,6 +19,8 @@ build({
     "swagger-jsdoc",
     "path",
     "url",
+    "bcrypt",
+    "@libsql/client",
   ],
   banner: {
     js: '#!/usr/bin/env node\nimport { createRequire as __createRequire } from "module"; const require = __createRequire(import.meta.url);',

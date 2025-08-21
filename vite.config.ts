@@ -7,6 +7,7 @@ import pkg from "./package.json";
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: "/auth",
   plugins: [
     react(),
     tailwindcss(),
