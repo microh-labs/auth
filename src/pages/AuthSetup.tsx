@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 export default function AuthSetup() {
   const [status, setStatus] = useState<null | boolean>(null);
@@ -13,14 +14,20 @@ export default function AuthSetup() {
   const [manualPub, setManualPub] = useState("");
   const [saveMsg, setSaveMsg] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     setLoading(true);
     fetch("/auth/api/keys/status")
       .then((res) => res.json())
-      .then((data) => setStatus(data.exists))
+      .then((data) => {
+        setStatus(data.exists);
+        if (data.exists) {
+          navigate("/auth", { replace: true });
+        }
+      })
       .finally(() => setLoading(false));
-  }, []);
+  }, [navigate]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-svh gap-4">
