@@ -379,27 +379,6 @@ app.use(
   }
 );
 
-/**
- * @swagger
- * /auth/api/hello:
- *   get:
- *     summary: Returns a greeting message
- *     responses:
- *       200:
- *         description: A greeting message
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: Hello from Chien Tran!
- */
-app.get("/auth/api/hello", (_req: Request, res: Response) => {
-  res.json({ message: "Hello from Chien Tran!" });
-});
-
 // Only listen if not imported as middleware (i.e., if run as entrypoint)
 if (import.meta.main) {
   // Auto-run drizzle-kit migrate before starting the server
