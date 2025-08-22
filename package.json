@@ -65,8 +65,7 @@
   "files": [
     "dist",
     "screenshots",
-    "app.ts",
-    "drizzle"
+    "app.ts"
   ],
   "license": "MIT",
   "keywords": [
