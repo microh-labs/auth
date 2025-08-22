@@ -1,16 +1,16 @@
-import React from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Link, useNavigate } from "react-router-dom";
 import {
   Card,
+  CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
 } from "@/components/ui/card";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { useAppConfig } from "@/lib/useAppConfig";
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function AuthHome() {
   const navigate = useNavigate();
