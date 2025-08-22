@@ -10,7 +10,7 @@
 - Professional, responsive UI (shadcn/ui, React, Vite)
 - Secure config, validation, and error handling
 - Auto-migrating SQLite DB (Drizzle ORM)
-- API docs (Swagger UI)
+- Programmatic migrations (no CLI needed)
 
 ---
 
@@ -25,8 +25,6 @@
    - Visit the setup page (`/setup`) to configure branding and upload/generate your JWT keypair.
 3. **Sign Up/Login:**
    - Use the web UI to create your first user and log in.
-4. **API Docs:**
-   - Visit `/auth/api-docs` for Swagger API documentation.
 
 ---
 
@@ -42,21 +40,15 @@ pnpm dev
 
 ### Project Structure
 
-- `src/pages/` — React pages (Auth, Profile, Setup, etc.)
+- `src/` — Frontend (React, shadcn/ui, assets, components)
 - `src/db/` — Drizzle ORM schema and DB logic
 - `app.ts` — Express backend (API, config, JWT, etc.)
-- `drizzle.config.ts` — Drizzle ORM config
 - `public/` — Static assets
 
 ### Database & Migrations
 
 - Uses SQLite (`drizzle.db`)
-- Migrations auto-run on server start (`drizzle-kit migrate`)
-- To create a new migration:
-  ```sh
-  pnpm drizzle-kit generate:sqlite
-  # or see Drizzle docs for details
-  ```
+- Migrations are run programmatically on server start (no CLI needed)
 
 ### Linting & Build
 
@@ -67,19 +59,23 @@ pnpm build
 
 ---
 
+## Screenshots
+
+<p align="center">
+  <img src="./screenshots/image.png" alt="App Screenshot" width="600" />
+</p>
+
 ## Maintainers
 
 - **Publishing:**
+
   - Update version in `package.json`
   - Build and publish to npm
-- **Config:**
-  - All app config (branding, keys) is stored in `auth-app-config.json`
+
 - **Screenshots:**
   - See `/screenshots/` for UI previews
 - **Entrypoint:**
   - `index.js` (CLI) and `app.ts` (server)
-- **Drizzle ORM:**
-  - See `drizzle.config.ts` and `/drizzle/` for schema/migrations
 
 ---
 
