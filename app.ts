@@ -405,6 +405,7 @@ if (import.meta.main) {
     : `npx drizzle-kit migrate`;
   try {
     execSync(migrateCmd, { stdio: "inherit", cwd: __dirname });
+    console.log("");
   } catch (e) {
     console.error("Failed to run drizzle-kit migrate:", e);
     process.exit(1);
