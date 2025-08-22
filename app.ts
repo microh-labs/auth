@@ -1,14 +1,9 @@
 import bcrypt from "bcrypt";
 import crypto from "crypto";
-
-import type { NextFunction, Request, Response } from "express";
 import express from "express";
 import jwt from "jsonwebtoken";
 import path from "path";
-import swaggerJSDoc from "swagger-jsdoc";
-import swaggerUi, { type SwaggerOptions } from "swagger-ui-express";
 import { fileURLToPath } from "url";
-import pkg from "./package.json";
 import { db } from "./src/db/index";
 import * as schema from "./src/db/schema";
 import { loadAppConfig, saveAppConfig } from "./src/lib/app-config";
@@ -20,38 +15,6 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(express.json());
-/**
- * @swagger
- * /auth/api/signup:
- *   post:
- *     summary: Register a new user with username and password
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               username:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       200:
- *         description: User registered
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *       400:
- *         description: Missing username or password
- *       409:
- *         description: Username already exists
- */
 app.post("/auth/api/signup", async (req, res) => {
   const { username, password } = req.body;
   function validateUsername(username: string) {
@@ -99,40 +62,6 @@ app.post("/auth/api/signup", async (req, res) => {
   }
 });
 
-/**
- * @swagger
- * /auth/api/login:
- *   post:
- *     summary: Login with username and password
- *     tags: [Auth]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               username:
- *                 type: string
- *               password:
- *                 type: string
- *     responses:
- *       200:
- *         description: Login successful
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                 username:
- *                   type: string
- *       400:
- *         description: Missing username or password
- *       401:
- *         description: Invalid username or password
- */
 app.post("/auth/api/login", async (req, res) => {
   const { username, password } = req.body;
   function validateUsername(username: string) {
@@ -186,38 +115,6 @@ app.post("/auth/api/keys/generate", (_req, res) => {
 // Trust proxy headers (needed for correct protocol detection behind Cloudflare Tunnel or reverse proxies)
 app.set("trust proxy", true);
 
-// Swagger definition (servers will be set at runtime)
-const swaggerDefinition = {
-  openapi: "3.0.0",
-  info: {
-    title: "@microh-lab/auth API",
-    version: pkg.version,
-    description: "API documentation for @microh-lab/auth",
-  },
-  servers: [],
-};
-
-const options: SwaggerOptions = {
-  swaggerDefinition,
-  apis: [path.join(__dirname, "app.ts")], // Path to the API docs
-};
-
-let swaggerSpec = swaggerJSDoc(options) as any;
-
-// Middleware to update Swagger server URL dynamically
-app.use((req: Request, _res: Response, next: NextFunction) => {
-  if (!swaggerSpec.servers || swaggerSpec.servers.length === 0) {
-    const proto = req.protocol;
-    const host = req.get("host");
-    swaggerSpec.servers = [
-      {
-        url: `${proto}://${host}`,
-      },
-    ];
-  }
-  next();
-});
-
 function generateKeypair() {
   const { publicKey, privateKey } = crypto.generateKeyPairSync("rsa", {
     modulusLength: 2048,
@@ -228,97 +125,6 @@ function generateKeypair() {
 }
 
 app.use(express.json());
-
-// Place this after app is declared and before other route registrations
-/**
- * @swagger
- * /auth/api/app-config:
- *   get:
- *     summary: Get app display config
- *     tags: [AppConfig]
- *     responses:
- *       200:
- *         description: App config (never includes privateKey)
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 appName:
- *                   type: string
- *                 description:
- *                   type: string
- *                 logoUrl:
- *                   type: string
- *                 publicKey:
- *                   type: string
- *   post:
- *     summary: Save app display config
- *     tags: [AppConfig]
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               appName:
- *                 type: string
- *               description:
- *                 type: string
- *               logoUrl:
- *                 type: string
- *               privateKey:
- *                 type: string
- *                 description: PEM-encoded private key (required only on first setup, never returned)
- *               publicKey:
- *                 type: string
- *                 description: PEM-encoded public key
- *     responses:
- *       200:
- *         description: Config saved
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *       403:
- *         description: Config already exists. Overriding is not allowed.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- */
-
-/**
- * @swagger
- * /auth/api/public-key:
- *   get:
- *     summary: Get the public key for JWT verification
- *     tags: [AppConfig]
- *     responses:
- *       200:
- *         description: PEM-encoded public key
- *         content:
- *           text/plain:
- *             schema:
- *               type: string
- *       404:
- *         description: No public key found
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- */
 
 // App config endpoints
 app.get("/auth/api/app-config", async (_req, res) => {
@@ -366,21 +172,6 @@ app.post("/auth/api/app-config", async (req, res) => {
   res.json({ success: true });
 });
 
-app.use(
-  "/auth/api-docs",
-  swaggerUi.serve,
-  (req: Request, res: Response, next: NextFunction) => {
-    const proto = req.protocol;
-    const host = req.get("host");
-    swaggerSpec.servers = [
-      {
-        url: `${proto}://${host}`,
-      },
-    ];
-    swaggerUi.setup(swaggerSpec)(req, res, next);
-  }
-);
-
 // Only listen if not imported as middleware (i.e., if run as entrypoint)
 if (import.meta.main) {
   // Run migrations programmatically using pushSQLiteSchema
@@ -399,9 +190,6 @@ if (import.meta.main) {
     const server = app.listen(port, () => {
       const actualPort = (server.address() as any).port;
       console.log(`Server running at http://localhost:${actualPort}/auth`);
-      console.log(
-        `Swagger UI available at http://localhost:${actualPort}/auth/api-docs`
-      );
     });
   })();
 }
