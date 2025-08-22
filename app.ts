@@ -381,9 +381,15 @@ app.use(
 
 // Only listen if not imported as middleware (i.e., if run as entrypoint)
 if (import.meta.main) {
-  // Auto-run drizzle-kit migrate before starting the server
+  // Auto-run drizzle-kit migrate before starting the server using local binary
+  const drizzleKitBin = path.join(
+    __dirname,
+    "node_modules",
+    ".bin",
+    process.platform === "win32" ? "drizzle-kit.cmd" : "drizzle-kit"
+  );
   try {
-    execSync("npx drizzle-kit migrate", { stdio: "inherit" });
+    execSync(`${drizzleKitBin} migrate`, { stdio: "inherit", cwd: __dirname });
   } catch (e) {
     console.error("Failed to run drizzle-kit migrate:", e);
     process.exit(1);
