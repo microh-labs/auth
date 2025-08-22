@@ -1,20 +1,27 @@
-import bcrypt from "bcrypt";
-import crypto from "crypto";
+// --- External imports ---
 import express from "express";
-import jwt from "jsonwebtoken";
 import path from "path";
 import { fileURLToPath } from "url";
+import bcrypt from "bcrypt";
+import crypto from "crypto";
+import jwt from "jsonwebtoken";
+
+// --- Internal imports ---
 import { db } from "./src/db/index";
 import * as schema from "./src/db/schema";
 import { loadAppConfig, saveAppConfig } from "./src/lib/app-config";
 
+// --- Constants ---
 const { usersTable } = schema;
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// --- Express app setup ---
 const app = express();
 app.use(express.json());
+app.set("trust proxy", true);
+
+// --- API ROUTES ---
 app.post("/auth/api/signup", async (req, res) => {
   const { username, password } = req.body;
   function validateUsername(username: string) {
@@ -108,13 +115,13 @@ app.post("/auth/api/login", async (req, res) => {
   res.json({ success: true, token });
 });
 // Generate and return a new keypair
+
 app.post("/auth/api/keys/generate", (_req, res) => {
   const { privateKey, publicKey } = generateKeypair();
   res.json({ privateKey, publicKey });
 });
-// Trust proxy headers (needed for correct protocol detection behind Cloudflare Tunnel or reverse proxies)
-app.set("trust proxy", true);
 
+// --- Utility functions ---
 function generateKeypair() {
   const { publicKey, privateKey } = crypto.generateKeyPairSync("rsa", {
     modulusLength: 2048,
@@ -124,9 +131,7 @@ function generateKeypair() {
   return { privateKey, publicKey };
 }
 
-app.use(express.json());
-
-// App config endpoints
+// --- App config endpoints ---
 app.get("/auth/api/app-config", async (_req, res) => {
   const config = await loadAppConfig();
   if (!config) return res.status(404).json({ error: "No config found" });
@@ -172,9 +177,8 @@ app.post("/auth/api/app-config", async (req, res) => {
   res.json({ success: true });
 });
 
-// Only listen if not imported as middleware (i.e., if run as entrypoint)
+// --- Server startup ---
 if (import.meta.main) {
-  // Run migrations programmatically using pushSQLiteSchema
   (async () => {
     try {
       const { pushSQLiteSchema } = await import("drizzle-kit/api");
