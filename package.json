@@ -67,7 +67,9 @@
     "dist",
     "screenshots",
     "app.ts",
-    "drizzle.config.ts"
+    "drizzle.config.ts",
+    "drizzle",
+    "src/db/schema.ts"
   ],
   "license": "MIT",
   "keywords": [
