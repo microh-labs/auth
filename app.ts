@@ -386,7 +386,7 @@ if (import.meta.main) {
     const binName =
       process.platform === "win32" ? "drizzle-kit.cmd" : "drizzle-kit";
     let dir = startDir;
-    const { sep, join } = path;
+    const { join } = path;
     while (true) {
       const candidate = join(dir, "node_modules", ".bin", binName);
       try {
