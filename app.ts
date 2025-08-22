@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
-import { execSync } from "child_process";
 import crypto from "crypto";
+
 import type { NextFunction, Request, Response } from "express";
 import express from "express";
 import jwt from "jsonwebtoken";
@@ -10,8 +10,10 @@ import swaggerUi, { type SwaggerOptions } from "swagger-ui-express";
 import { fileURLToPath } from "url";
 import pkg from "./package.json";
 import { db } from "./src/db/index";
-import { usersTable } from "./src/db/schema";
+import * as schema from "./src/db/schema";
 import { loadAppConfig, saveAppConfig } from "./src/lib/app-config";
+
+const { usersTable } = schema;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -381,44 +383,27 @@ app.use(
 
 // Only listen if not imported as middleware (i.e., if run as entrypoint)
 if (import.meta.main) {
-  // Robustly find drizzle-kit binary up the directory tree
-  function findDrizzleKitBin(startDir: string): string | null {
-    const binName =
-      process.platform === "win32" ? "drizzle-kit.cmd" : "drizzle-kit";
-    let dir = startDir;
-    const { join } = path;
-    while (true) {
-      const candidate = join(dir, "node_modules", ".bin", binName);
-      try {
-        if (require("fs").existsSync(candidate)) return candidate;
-      } catch {}
-      const parent = path.dirname(dir);
-      if (parent === dir) break;
-      dir = parent;
+  // Run migrations programmatically using pushSQLiteSchema
+  (async () => {
+    try {
+      const { pushSQLiteSchema } = await import("drizzle-kit/api");
+      const { apply } = await pushSQLiteSchema(schema, db);
+      await apply();
+      console.log("Migrations applied successfully.");
+    } catch (e) {
+      console.error("Failed to run drizzle migrations:", e);
+      process.exit(1);
     }
-    return null;
-  }
-
-  let drizzleKitBin = findDrizzleKitBin(__dirname);
-  let migrateCmd = drizzleKitBin
-    ? `${drizzleKitBin} migrate`
-    : `npx drizzle-kit migrate`;
-  try {
-    execSync(migrateCmd, { stdio: "inherit", cwd: __dirname });
-    console.log("");
-  } catch (e) {
-    console.error("Failed to run drizzle-kit migrate:", e);
-    process.exit(1);
-  }
-  app.use("/auth", express.static(path.join(__dirname, "dist")));
-  const port = process.env.PORT ? Number(process.env.PORT) : 0;
-  const server = app.listen(port, () => {
-    const actualPort = (server.address() as any).port;
-    console.log(`Server running at http://localhost:${actualPort}/auth`);
-    console.log(
-      `Swagger UI available at http://localhost:${actualPort}/auth/api-docs`
-    );
-  });
+    app.use("/auth", express.static(path.join(__dirname, "dist")));
+    const port = process.env.PORT ? Number(process.env.PORT) : 0;
+    const server = app.listen(port, () => {
+      const actualPort = (server.address() as any).port;
+      console.log(`Server running at http://localhost:${actualPort}/auth`);
+      console.log(
+        `Swagger UI available at http://localhost:${actualPort}/auth/api-docs`
+      );
+    });
+  })();
 }
 
 export default app;
