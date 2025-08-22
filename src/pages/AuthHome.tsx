@@ -94,6 +94,9 @@ export default function AuthHome() {
               </Button>
             </>
           )}
+          <Button asChild variant="ghost" className="w-full h-10 mt-2">
+            <a href="/">Go to Home</a>
+          </Button>
         </CardContent>
       </Card>
     </div>
