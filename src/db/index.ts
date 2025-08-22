@@ -5,7 +5,7 @@ import path from "path";
 import os from "os";
 
 const homeDir = os.homedir();
-const dbDir = path.join(homeDir, ".microh-auth");
+const dbDir = path.join(homeDir, ".ulabs", "auth");
 const dbPath = path.join(dbDir, "drizzle.db");
 
 const client = createClient({ url: `file:${dbPath}` });

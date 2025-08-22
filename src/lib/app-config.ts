@@ -1,7 +1,6 @@
-import fs from "fs";
-import path from "path";
-
-const CONFIG_PATH = path.resolve(process.cwd(), "auth-app-config.json");
+import { eq } from "drizzle-orm";
+import { db } from "../db/index";
+import { appConfigTable } from "../db/schema";
 
 export type AppConfig = {
   appName: string;
@@ -11,17 +10,41 @@ export type AppConfig = {
   publicKey?: string;
 };
 
-export function saveAppConfig(config: AppConfig) {
-  fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2), {
-    mode: 0o600,
+// Upsert config as a single row with id 'singleton'
+export async function saveAppConfig(config: AppConfig) {
+  await db.delete(appConfigTable).where(eq(appConfigTable.id, "singleton"));
+  await db.insert(appConfigTable).values({
+    id: "singleton",
+    appName: config.appName,
+    description: config.description,
+    logoUrl: config.logoUrl,
+    privateKey: config.privateKey,
+    publicKey: config.publicKey,
   });
 }
 
-export function loadAppConfig(): AppConfig | null {
-  if (!fs.existsSync(CONFIG_PATH)) return null;
-  return JSON.parse(fs.readFileSync(CONFIG_PATH, "utf8"));
+export async function loadAppConfig(): Promise<AppConfig | null> {
+  const row = await db
+    .select()
+    .from(appConfigTable)
+    .where(eq(appConfigTable.id, "singleton"))
+    .get();
+  if (!row) return null;
+  const { appName, description, logoUrl, privateKey, publicKey } = row;
+  return {
+    appName,
+    description: description ?? undefined,
+    logoUrl: logoUrl ?? undefined,
+    privateKey: privateKey ?? undefined,
+    publicKey: publicKey ?? undefined,
+  };
 }
 
-export function configExists() {
-  return fs.existsSync(CONFIG_PATH);
+export async function configExists() {
+  const row = await db
+    .select()
+    .from(appConfigTable)
+    .where(eq(appConfigTable.id, "singleton"))
+    .get();
+  return !!row;
 }

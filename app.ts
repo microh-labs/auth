@@ -78,7 +78,7 @@ app.post("/auth/api/signup", async (req, res) => {
   try {
     await db.insert(usersTable).values({ username, passwordHash });
     // Issue JWT on signup
-    const config = loadAppConfig();
+    const config = await loadAppConfig();
     if (!config?.privateKey) {
       return res.status(500).json({
         error: "JWT private key not found in config. Please run setup.",
@@ -164,7 +164,7 @@ app.post("/auth/api/login", async (req, res) => {
     return res.status(401).json({ error: "Invalid username or password." });
   }
   // Issue JWT on login
-  const config = loadAppConfig();
+  const config = await loadAppConfig();
   if (!config?.privateKey) {
     return res.status(500).json({
       error: "JWT private key not found in config. Please run setup.",
@@ -319,8 +319,8 @@ app.use(express.json());
  */
 
 // App config endpoints
-app.get("/auth/api/app-config", (_req, res) => {
-  const config = loadAppConfig();
+app.get("/auth/api/app-config", async (_req, res) => {
+  const config = await loadAppConfig();
   if (!config) return res.status(404).json({ error: "No config found" });
   // Never expose privateKey
   const { privateKey, ...safeConfig } = config;
@@ -328,15 +328,15 @@ app.get("/auth/api/app-config", (_req, res) => {
 });
 
 // Expose public key only
-app.get("/auth/api/public-key", (_req, res) => {
-  const config = loadAppConfig();
+app.get("/auth/api/public-key", async (_req, res) => {
+  const config = await loadAppConfig();
   if (!config?.publicKey)
     return res.status(404).json({ error: "No public key found" });
   res.type("text/plain").send(config.publicKey);
 });
 
-app.post("/auth/api/app-config", (req, res) => {
-  if (loadAppConfig()) {
+app.post("/auth/api/app-config", async (req, res) => {
+  if (await loadAppConfig()) {
     return res
       .status(403)
       .json({ error: "Config already exists. Overriding is not allowed." });
@@ -360,7 +360,7 @@ app.post("/auth/api/app-config", (req, res) => {
       return res.status(400).json({ error: "Invalid public key." });
     }
   }
-  saveAppConfig({ appName, description, logoUrl, privateKey, publicKey });
+  await saveAppConfig({ appName, description, logoUrl, privateKey, publicKey });
   res.json({ success: true });
 });
 
